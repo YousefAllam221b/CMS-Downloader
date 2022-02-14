@@ -3,8 +3,8 @@ from requests_ntlm import HttpNtlmAuth
 import bs4 as bs
 import re
 import os
-path = r'C:\Users\Youse\Documents\Semseter 6'
-
+mainDir = r'C:\Users\Youse\Documents\Semester 6'
+os.chdir(mainDir    )
 # Making a get request
 def getRequest(path):
     recieve = requests.get(path, auth = HttpNtlmAuth('yousef.alam', 'JohnWatson123!'))
@@ -40,12 +40,16 @@ def downloadCourseContent(dirName, id, sid):
         name = downloadableContentLabel[i].getText()[4:].lstrip()
         path = downloadableContent[i].get('href')
         filename, ext = os.path.splitext(downloadableContent[i].get('href'))
+        info = downloadableContentLabel[i].next_sibling
         if (ext != '.mp4' and ext != '.png'):
-
-            if ('lecture' in name.lower()):
+            if ('lecture' in info.lower()):
                 downloadFile(dirName + '/Lectures/', name, 'https://cms.guc.edu.eg/' + path,  ext)
             elif ('practice assignment' in name.lower()):
                 downloadFile(dirName + '/Practice Assignments/', name, 'https://cms.guc.edu.eg/' + path,  ext)
+            elif ('exam' in info.lower()):
+                downloadFile(dirName + '/Exams/', name, 'https://cms.guc.edu.eg/' + path,  ext)
+            elif ('quiz' in info.lower() or 'quiz' in name.lower()):
+                downloadFile(dirName + '/Quizzes/', name, 'https://cms.guc.edu.eg/' + path,  ext)
             else:
                 downloadFile(dirName + '/Others/', name, 'https://cms.guc.edu.eg/' + path,  ext)
 
@@ -54,10 +58,5 @@ def downloadAllCourses():
     for course in CoursesInfo:
         print(course['Name'], course['ID'], course['SID'])
         downloadCourseContent(course['Name'], course['ID'], course['SID'])
-        print('Done')
+
 downloadAllCourses()
-print("All Done")
-
-
-
-#
