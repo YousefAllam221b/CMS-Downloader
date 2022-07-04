@@ -3,6 +3,7 @@ from requests_ntlm import HttpNtlmAuth
 import bs4 as bs
 import re
 import os
+import pandas as pd
 
 # Runs the script in the choosen directory.
 mainDir = r'C:\Users\Youse\Documents\Semester 6'
@@ -29,8 +30,11 @@ def getCoursesInfo():
 
     # Loops on each row of the table (Course) and append it's Info in CourseInfo array
     for i in range(len(CoursesNames)):
-        CourseDict = {'Name': re.sub('[|()]', '', CoursesNames[i].getText()) , 'ID': CoursesIDs[i].getText(), 'SID': StudentIDs[i].getText()}
+        filteredName = re.sub('[|()]', '', CoursesNames[i].getText())
+        CourseDict = {'Name': filteredName[0:len(filteredName) - 4] , 'ID': CoursesIDs[i].getText(), 'SID': StudentIDs[i].getText(), 'Files':[]}
         CoursesInfo.append(CourseDict)
+    df = pd.DataFrame(data=CoursesInfo)
+    df.to_excel(r'C:\Users\Youse\Documents\Semester 6\Downloaded.xlsx')
     return CoursesInfo
 
 # Downloads a file
@@ -41,6 +45,7 @@ def downloadFile(dir, name, path, ext):
     with open(dir + name + ext,'wb') as f:
         f.write(recieve.content)
 
+# Downloads all files for one Course given it's Name, ID and SID.
 def downloadCourseContent(dirName, id, sid):
     # Gets the HTML file of a Course given it's ID and SID.
     Course_Page_Response = getRequest('https://cms.guc.edu.eg/apps/student/CourseViewStn.aspx?id={id}&sid={sid}'.format(id = id, sid = sid)).text
@@ -50,13 +55,15 @@ def downloadCourseContent(dirName, id, sid):
     downloadableContentLabel = Course_Page_Html.select('.page-title-wrapper [class=card-body] div strong')
     downloadableContent = Course_Page_Html.select('.page-title-wrapper #download')
 
+    print('starting')
     for i in range(len(downloadableContent)):
         # Chooses the file name from it's Label, it's type (which folder),it's download link and it's extension.
-        name = downloadableContentLabel[i].getText()[4:].lstrip()
+        filteredName = downloadableContentLabel[i].getText()[4:].lstrip()
+        name = filteredName[0:len(filteredName) - 4]
         path = downloadableContent[i].get('href')
         filename, ext = os.path.splitext(downloadableContent[i].get('href'))
         info = downloadableContentLabel[i].next_sibling
-
+        print(name, path)
         # Checks the extension and the type of file to save it to the rigth folder.
         if (ext != '.mp4' and ext != '.png'):
             if ('lecture' in info.lower()):
@@ -77,4 +84,25 @@ def downloadAllCourses():
         print(course['Name'], course['ID'], course['SID'])
         downloadCourseContent(course['Name'], course['ID'], course['SID'])
 
+# downloadAllCourses()
+
+# We call the pandas.read_excel method and pass through the string './cities.xlsx' as the file is called cities.xlsx.  By saying './' we are saying
+# go to the current folder, excel-to-python, and find the 'cities.xlsx' file there
+#
+# x = getCoursesInfo()
+
+# downladedFiles = pd.read_excel(r'C:\Users\Youse\Documents\Semester 6\Downloaded.xlsx')
+# downladedFilesDict = downladedFiles.to_dict('records')
+# for i in downladedFilesDict:
+#     print(i)
+
+downloadedFiles = pd.read_excel(r'C:\Users\Youse\Documents\Semester 6\Downloaded.xlsx')
+downloadedFilesDict = downloadedFiles.to_dict('records')
+for i in downloadedFilesDict:
+    print(i)
 downloadAllCourses()
+
+
+
+
+#
